@@ -44,7 +44,9 @@ void addVertex(graph &G, char newVertexID);
 void addEdge(graph &G, char srcId, char destId, int weight);
 void addUndirectedEdge(graph &G, char sourceID, char destID, int weight);
 void buildGraph(graph &G);
-void DFS(graph G, adrVertex v);
+void DFS(graph G, adrVertex start, adrVertex dest, int &minWeight, string &shortestPath, string currentPath, int currentWeight, bool visited[]);
+void DFSWithoutNode(graph G, adrVertex start, adrVertex dest, int &minWeight, string &shortestPath, string currentPath, int currentWeight, bool visited[], char excludedNode);
+void findShortestPathWithoutNode(graph G, char startId, char destId, char excludedNode);
 void printGraph(graph G);
 
 #endif // MLL_H_INCLUDED

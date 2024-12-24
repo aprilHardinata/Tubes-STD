@@ -122,41 +122,95 @@ void buildGraph(graph &G) {
     addUndirectedEdge(G, 'F', 'G', 2);
 }
 
-void DFS(graph G, adrVertex v) {
-    Stack S;
-    bool visited[100];  // Array untuk menandai apakah vertex sudah dikunjungi
-    adrVertex x, w;
+void DFS(graph G, adrVertex start, adrVertex dest, int &minWeight, string &shortestPath, string currentPath, int currentWeight, bool visited[]) {
+    visited[start->idVertex - 'A'] = true;
+    currentPath += start->idVertex;
 
-    // Inisialisasi stack dan array visited
-    initStack(S);
-    for (int i = 0; i < 100; i++) visited[i] = false;
-
-    // Mulai DFS dengan menambahkan vertex awal ke stack
-    push(S, v);
-    visited[v->idVertex - 'A'] = true;  // Tandai vertex sebagai dikunjungi
-
-    while (!isEmpty(S)) {
-        x = pop(S);
-        cout << x->idVertex << " ";  // Menampilkan vertex yang dikunjungi
-
-        // Traverse semua tetangga dari vertex x
-        adrEdge edge = x->firstEdge;
+    if (start == dest) {
+        if (currentWeight < minWeight) {
+            minWeight = currentWeight;
+            shortestPath = currentPath;
+        }
+    } else {
+        adrEdge edge = start->firstEdge;
         while (edge != NULL) {
-            w = findVertex(G, edge->destVertexId);
-            if (!visited[w->idVertex - 'A']) {
-                push(S, w);  // Tambahkan tetangga ke stack
-                visited[w->idVertex - 'A'] = true;  // Tandai sebagai dikunjungi
+            adrVertex nextVertex = findVertex(G, edge->destVertexId);
+            if (!visited[nextVertex->idVertex - 'A']) {
+                DFS(G, nextVertex, dest, minWeight, shortestPath, currentPath, currentWeight + edge->weight, visited);
             }
             edge = edge->nextEdge;
         }
     }
+
+    visited[start->idVertex - 'A'] = false;
 }
 
+void DFSWithoutNode(graph G, adrVertex start, adrVertex dest, int &minWeight, string &shortestPath, string currentPath, int currentWeight, bool visited[], char excludedNode) {
+    visited[start->idVertex - 'A'] = true;
+    currentPath += start->idVertex;
+
+    if (start == dest) {
+        if (currentWeight < minWeight) {
+            minWeight = currentWeight;
+            shortestPath = currentPath;
+        }
+    } else {
+        adrEdge edge = start->firstEdge;
+        while (edge != NULL) {
+            adrVertex nextVertex = findVertex(G, edge->destVertexId);
+
+            // Hanya lanjutkan jika vertex belum dikunjungi dan bukan vertex yang dilarang
+            if (nextVertex->idVertex != excludedNode && !visited[nextVertex->idVertex - 'A']) {
+                DFSWithoutNode(G, nextVertex, dest, minWeight, shortestPath, currentPath, currentWeight + edge->weight, visited, excludedNode);
+            }
+            edge = edge->nextEdge;
+        }
+    }
+
+    // Kembalikan status kunjungan untuk backtracking
+    visited[start->idVertex - 'A'] = false;
+}
+
+void findShortestPathWithoutNode(graph G, char startId, char destId, char excludedNode) {
+    adrVertex start = findVertex(G, startId);
+    adrVertex dest = findVertex(G, destId);
+
+    if (start == NULL || dest == NULL) {
+        cout << "Start or destination vertex not found!\n";
+        return;
+    }
+
+    int minWeight = INT_MAX;
+    string shortestPath = "";
+    string currentPath = "";
+    bool visited[26] = {false};
+
+    DFSWithoutNode(G, start, dest, minWeight, shortestPath, currentPath, 0, visited, excludedNode);
+
+    if (shortestPath.empty()) {
+        cout << "No path found excluding node " << excludedNode << "!\n";
+    } else {
+        cout << "Jalan tercepat dari " << startId << " (MSU) "<< " ke " << destId << " (SPORT CENTER)"<< " Tanpa node " << excludedNode << ": " << shortestPath << endl << "Berat total :" << minWeight << "\n";
+    }
+}
 
 void printGraph(graph G) {
     adrVertex tempVertex = G.firstVertex;
     while (tempVertex != NULL) {
-        cout << tempVertex->idVertex << " -> ";
+        cout << tempVertex->idVertex;
+
+        // Menambahkan deskripsi vertex
+        switch (tempVertex->idVertex) {
+            case 'A': cout << " = TUCH"; break;
+            case 'B': cout << " = SPORT CENTER"; break;
+            case 'C': cout << " = HOTEL LINGGIAN"; break;
+            case 'D': cout << " = REKTORAT"; break;
+            case 'E': cout << " = FAKULTAS ILMU TERAPAN"; break;
+            case 'F': cout << " = GEDUNG DAMAR(K)"; break;
+            case 'G': cout << " = MSU"; break;
+        }
+
+        cout << " -> ";
         adrEdge tempEdge = tempVertex->firstEdge;
         while (tempEdge != NULL) {
             cout << "(" << tempEdge->destVertexId << ", " << tempEdge->weight << ") ";
